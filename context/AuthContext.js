@@ -1,6 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { login as apiLogin, register as apiRegister, logout as apiLogout } from '../api/auth';
+import React, { createContext, useState, useEffect,useContext  } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUsers } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -9,97 +9,51 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await AsyncStorage.getItem('user');
-        const token = await AsyncStorage.getItem('authToken');
-        
-        if (userData && token) {
-          setUser(JSON.parse(userData));
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadUser();
+    checkUser();
   }, []);
 
-  const login = async (credentials) => {
+  const checkUser = async () => {
     try {
-      const response = await apiLogin(credentials);
-      
-      // Debug log to see what we're getting
-      console.log('AuthContext login response:', response);
-      
-      // Handle different response structures
-      const token = response?.token || response?.data?.token;
-      const userData = response?.user || response?.data?.user || response?.data;
-      
-      if (!token) {
-        throw new Error('No token received from server');
-      }
-      
-      await AsyncStorage.setItem('authToken', token);
+      const userData = await AsyncStorage.getItem('user');
       if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+//   This is to login
+  const login = async (username, password) => {
+    try {
+      const users = await getUsers(username);
+      if (users.length > 0 && users[0].password === password) {
+        const userData = users[0];
         await AsyncStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
+        return true;
       }
-      
-      return response;
+      return false;
     } catch (error) {
-      console.error('Login error in AuthContext:', error);
+      console.error('Login error:', error);
       throw error;
     }
   };
 
-  const register = async (userData) => {
-    try {
-      const response = await apiRegister(userData);
-      
-      // Debug log to see what we're getting
-      console.log('AuthContext register response:', response);
-      
-      // Handle different response structures
-      const token = response?.token || response?.data?.token;
-      const userInfo = response?.user || response?.data?.user || response?.data;
-      
-      if (!token) {
-        throw new Error('No token received from server');
-      }
-      
-      await AsyncStorage.setItem('authToken', token);
-      if (userInfo) {
-        await AsyncStorage.setItem('user', JSON.stringify(userInfo));
-        setUser(userInfo);
-      }
-      
-      return response;
-    } catch (error) {
-      console.error('Register error in AuthContext:', error);
-      throw error;
-    }
-  };
-
+//   this is to logout 
   const logout = async () => {
     try {
-      await apiLogout();
-      await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if logout API fails, clear local data
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
-      setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

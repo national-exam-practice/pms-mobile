@@ -6,5 +6,15 @@
     "orientation": "portrait",
     "platforms": ["ios", "android"],
     "userInterfaceStyle": "light"
-  }
+  },
+  "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ]
+    ]
 }

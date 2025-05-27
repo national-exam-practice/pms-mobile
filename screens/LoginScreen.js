@@ -1,77 +1,49 @@
-import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { useAuth } from '../context/AuthContext';
-import AuthForm from '../components/AuthForm';
-
-const LoginSchema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('Required'),
-  password: Yup.string().required('Required'),
-});
+import React, { useState, useContext } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
-  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useContext(AuthContext);
 
-  const handleLogin = async (values, { setSubmitting, setErrors }) => {
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter both username and password');
+      return;
+    }
+
     try {
-      await login(values);
+      const success = await login(username, password);
+      if (success) {
+        navigation.replace('App');
+      } else {
+        Alert.alert('Error', 'Invalid credentials');
+      }
     } catch (error) {
-      setErrors({ general: error.message || 'Login failed' });
-    } finally {
-      setSubmitting(false);
+      Alert.alert('Error', 'Failed to login. Please try again.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vehicle Management</Text>
-      
-      <Formik
-        initialValues={{ email: '', password: '' }}
-        validationSchema={LoginSchema}
-        onSubmit={handleLogin}
-      >
-        {({ 
-          handleSubmit, 
-          isSubmitting, 
-          errors, 
-          handleChange, 
-          handleBlur, 
-          values,
-          touched
-        }) => (
-          <AuthForm
-            fields={[
-              { 
-                name: 'email', 
-                placeholder: 'Email', 
-                icon: 'mail',
-                keyboardType: 'email-address'
-              },
-              { 
-                name: 'password', 
-                placeholder: 'Password', 
-                icon: 'lock-closed', 
-                secure: true 
-              },
-            ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            submitText="Login"
-            error={errors.general}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            values={values}
-            touched={touched}
-            errors={errors}
-          />
-        )}
-      </Formik>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>Personal Finance Tracker</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Username (email)"
+        value={username}
+        onChangeText={setUsername}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Button title="Login" onPress={handleLogin} />
     </View>
   );
 };
@@ -81,18 +53,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 30,
   },
-  link: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: '#3498db',
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+    borderRadius: 5,
   },
 });
 

@@ -1,0 +1,21 @@
+<uses-permission android:name="android.permission.VIBRATE" />
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+<application>
+ <meta-data
+  android:name="expo.modules.notifications.default_notification_channel_id"
+  android:value="budget-alerts"/>
+    android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver"
+    android:exported="false">
+    <intent-filter>
+      <action android:name="android.intent.action.BOOT_COMPLETED" />
+    </intent-filter>
+  </receiver>
+  <service
+    android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
+    android:exported="false">
+    <intent-filter>
+      <action android:name="com.google.firebase.MESSAGING_EVENT" />
+    </intent-filter>
+  </service>
+</application>
